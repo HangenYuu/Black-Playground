@@ -161,8 +161,9 @@ export default function App() {
       renderOverviewRuler: true,
       minimap: { enabled: false },
       fontSize: 13,
-      readOnly: true,
+      readOnly: false,
       originalEditable: true,
+      modifiedEditable: false,
       scrollBeyondLastLine: false,
       wordWrap: "on"
     };
@@ -361,9 +362,10 @@ export default function App() {
 
         {formatError ? <div className="mb-3 rounded-xl bg-red-950/40 p-3 text-sm text-red-200 ring-1 ring-red-800/40">{formatError}</div> : null}
 
-        <div className="flex-1 overflow-hidden rounded-2xl bg-zinc-900/40 ring-1 ring-zinc-700/50">
+        <div className="h-[70vh] min-h-[420px] overflow-hidden rounded-2xl bg-zinc-900/40 ring-1 ring-zinc-700/50">
           <DiffEditor
             height="100%"
+            width="100%"
             language="python"
             theme="vs-dark"
             original={code}
