@@ -28,7 +28,27 @@ await micropip.install("black==${blackVersion}")`
 import black
 from black import Mode, TargetVersion
 
+def _as_opts_dict(opts):
+    if opts is None:
+        return {}
+
+    # Pyodide receives JS objects as JsProxy; convert when possible.
+    try:
+        if hasattr(opts, "to_py"):
+            opts = opts.to_py()
+    except Exception:
+        pass
+
+    if isinstance(opts, dict):
+        return opts
+
+    try:
+        return dict(opts)
+    except Exception:
+        return {}
+
 def format_code(src, opts):
+    opts = _as_opts_dict(opts)
     style = opts.get("style", "stable")
     preview = style in ("preview", "unstable")
     unstable = style == "unstable"
