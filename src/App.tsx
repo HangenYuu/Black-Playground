@@ -1,14 +1,50 @@
-import { DiffEditor } from "@monaco-editor/react";
+import { Editor } from "@monaco-editor/react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { decodeState, encodeState } from "./lib/share";
 import { BlackOptions, PlaygroundState, StyleMode } from "./lib/types";
 
 const STORAGE_KEY = "black_playground_state_v1";
 
-const DEFAULT_CODE = `def greet(name: str) -> str:
-    return f"Hello, {name}!"
+const DEFAULT_CODE = `from seven_dwwarfs import Grumpy, Happy, Sleepy, Bashful, Sneezy, Dopey, Doc
+x = {  'a':37,'b':42,
 
-print(greet("world"))
+'c':927}
+
+x = 123456789.123456789E123456789
+
+if very_long_variable_name is not None and \
+ very_long_variable_name.field > 0 or \
+ very_long_variable_name.is_debug:
+ z = 'hello '+'world'
+else:
+ world = 'world'
+ a = 'hello {}'.format(world)
+ f = rf'hello {world}'
+if (this
+and that): y = 'hello ''world'#FIXME: https://github.com/psf/black/issues/26
+class Foo  (     object  ):
+  def f    (self   ):
+    return       37*-2
+  def g(self, x,y=42):
+      return y
+def f  (   a: List[ int ]) :
+  return      37-a[42-u :  y**3]
+def very_important_function(template: str,*variables,file: os.PathLike,debug:bool=False,):
+    """Applies \`variables\` to the \`template\` and writes to \`file\`."""
+    with open(file, "w") as f:
+     ...
+# fmt: off
+custom_formatting = [
+    0,  1,  2,
+    3,  4,  5,
+    6,  7,  8,
+]
+# fmt: on
+regular_formatting = [
+    0,  1,  2,
+    3,  4,  5,
+    6,  7,  8,
+]
 `;
 
 const defaultOptions: BlackOptions = {
@@ -82,7 +118,6 @@ export default function App() {
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
   const latestHandledIdRef = useRef(0);
-  const originalListenerAttachedRef = useRef(false);
 
   useEffect(() => {
     const shared = decodeState(window.location.hash);
@@ -154,18 +189,24 @@ export default function App() {
     };
   }, []);
 
-  const monacoOptions = useMemo(() => {
+  const inputEditorOptions = useMemo(() => {
     return {
       automaticLayout: true,
-      renderSideBySide: true,
-      renderOverviewRuler: true,
       minimap: { enabled: false },
       fontSize: 13,
-      readOnly: false,
-      originalEditable: true,
-      modifiedEditable: false,
       scrollBeyondLastLine: false,
       wordWrap: "on"
+    };
+  }, []);
+
+  const outputEditorOptions = useMemo(() => {
+    return {
+      automaticLayout: true,
+      minimap: { enabled: false },
+      fontSize: 13,
+      scrollBeyondLastLine: false,
+      wordWrap: "on",
+      readOnly: true
     };
   }, []);
 
@@ -363,24 +404,35 @@ export default function App() {
         {formatError ? <div className="mb-3 rounded-xl bg-red-950/40 p-3 text-sm text-red-200 ring-1 ring-red-800/40">{formatError}</div> : null}
 
         <div className="h-[70vh] min-h-[420px] overflow-hidden rounded-2xl bg-zinc-900/40 ring-1 ring-zinc-700/50">
-          <DiffEditor
-            height="100%"
-            width="100%"
-            language="python"
-            theme="vs-dark"
-            original={code}
-            modified={formatted}
-            options={monacoOptions}
-            loading={<div className="flex h-full w-full items-center justify-center text-sm text-zinc-300">Loading editor...</div>}
-            onMount={(editor) => {
-              if (originalListenerAttachedRef.current) return;
-              originalListenerAttachedRef.current = true;
-              const originalEditor = editor.getOriginalEditor();
-              originalEditor.onDidChangeModelContent(() => {
-                setCode(originalEditor.getValue());
-              });
-            }}
-          />
+          <div className="grid h-full grid-cols-1 divide-y divide-zinc-700/40 md:grid-cols-2 md:divide-x md:divide-y-0">
+            <div className="h-full">
+              <div className="border-b border-zinc-700/40 bg-zinc-900/50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                Input
+              </div>
+              <Editor
+                height="calc(100% - 33px)"
+                width="100%"
+                language="python"
+                theme="vs-dark"
+                value={code}
+                options={inputEditorOptions}
+                onChange={(value) => setCode(value ?? "")}
+              />
+            </div>
+            <div className="h-full">
+              <div className="border-b border-zinc-700/40 bg-zinc-900/50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                Formatted output
+              </div>
+              <Editor
+                height="calc(100% - 33px)"
+                width="100%"
+                language="python"
+                theme="vs-dark"
+                value={formatted}
+                options={outputEditorOptions}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
